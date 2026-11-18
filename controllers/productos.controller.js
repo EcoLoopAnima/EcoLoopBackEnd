@@ -1,34 +1,20 @@
-// ============================================================
 // controllers/productos.controller.js  →  LA LÓGICA
-// ------------------------------------------------------------
-// Acá está "lo que hace" cada ruta. Cada función recibe:
-//   req → lo que manda el cliente (params, body)
-//   res → lo que usamos para responder
-// ============================================================
+// Cada función recibe req (lo que manda el cliente) y res (lo que respondemos).
 
-// Traemos los datos desde la carpeta data
 const productos = require("../data/productos");
 
-// ------------------------------------------------------------
-// GET /productos  →  Listar todos
-// (Ficha 0: listarProductos)
-// ------------------------------------------------------------
+const CATEGORIAS = ["kit-estudio", "kit-empresarial", "individual"];
+
+// GET /productos
 function obtenerProductos(req, res) {
   res.json(productos);
 }
 
-// ------------------------------------------------------------
-// GET /productos/:id  →  Buscar uno por id
-// (Ficha 0: buscarProducto)
-// ------------------------------------------------------------
+// GET /productos/:id
 function obtenerProductoPorId(req, res) {
-  // Lo que viene en la URL siempre es texto ("1"),
-  // por eso lo pasamos a número con Number().
-  const id = Number(req.params.id);
-
+  const id = Number(req.params.id); // en la URL el id llega como texto
   const producto = productos.find((p) => p.id === id);
 
-  // Si no existe, avisamos con código 404 (No encontrado)
   if (!producto) {
     return res.status(404).json({ mensaje: "Producto no encontrado" });
   }
@@ -36,91 +22,98 @@ function obtenerProductoPorId(req, res) {
   res.json(producto);
 }
 
-// ------------------------------------------------------------
-// POST /productos  →  Agregar uno nuevo
-// (Ficha 0: agregarProducto / Ficha 2: POST)
-// ------------------------------------------------------------
+// POST /productos
 function agregarProducto(req, res) {
-  // Si el cliente no manda body, req.body llega "undefined".
-  // Con "|| {}" usamos un objeto vacío y no se rompe nada.
-  const { nombre } = req.body || {};
+  const { nombre, precio, categoria, descripcion, imagen, incluye } = req.body || {};
 
-  // Validación: si no mandan nombre, no agregamos nada.
-  // Código 400 = "el pedido está mal hecho".
+  // Validaciones: 400 = pedido mal hecho
   if (!nombre) {
     return res.status(400).json({ mensaje: "Falta el nombre del producto" });
   }
+  if (typeof precio !== "number" || precio < 0) {
+    return res.status(400).json({ mensaje: "El precio tiene que ser un número mayor o igual a 0" });
+  }
+  if (categoria !== undefined && !CATEGORIAS.includes(categoria)) {
+    return res.status(400).json({ mensaje: "Categoría inválida. Usá: " + CATEGORIAS.join(", ") });
+  }
 
-  // ¿Por qué no usamos productos.length + 1?
-  // Si borramos un producto, el length baja y se pueden repetir ids.
-  // Más seguro: buscar el id más alto y sumarle 1.
+  // id más alto + 1 (así no se repiten si se borra alguno)
   const ultimoId = productos.length > 0
     ? Math.max(...productos.map((p) => p.id))
     : 0;
 
   const nuevoProducto = {
     id: ultimoId + 1,
-    nombre: nombre
+    nombre,
+    precio,
+    categoria: categoria || "individual",
+    descripcion: descripcion || "",
+    imagen: imagen || "",
   };
+  if (incluye !== undefined) nuevoProducto.incluye = incluye;
 
   productos.push(nuevoProducto);
 
-  // Código 201 = "creado". Devolvemos el producto nuevo.
   res.status(201).json(nuevoProducto);
 }
 
-// ------------------------------------------------------------
-// PUT /productos/:id  →  Modificar uno
-// (Ficha 0: modificarProducto / Ficha 2: PUT)
-// ------------------------------------------------------------
+// PUT /productos/:id  → cambia solo los datos que lleguen
 function modificarProducto(req, res) {
   const id = Number(req.params.id);
-  const { nombre } = req.body || {};
-
   const producto = productos.find((p) => p.id === id);
 
   if (!producto) {
     return res.status(404).json({ mensaje: "Producto no encontrado" });
   }
 
-  if (!nombre) {
-    return res.status(400).json({ mensaje: "Falta el nombre del producto" });
+  const { nombre, precio, categoria, descripcion, imagen, incluye } = req.body || {};
+
+  const mandaAlgo = [nombre, precio, categoria, descripcion, imagen, incluye]
+    .some((dato) => dato !== undefined);
+  if (!mandaAlgo) {
+    return res.status(400).json({ mensaje: "No mandaste ningún dato para modificar" });
   }
 
-  // Como "producto" apunta al objeto que está dentro del array,
-  // al cambiarlo acá se cambia también en el array.
-  producto.nombre = nombre;
+  if (nombre !== undefined && !nombre) {
+    return res.status(400).json({ mensaje: "El nombre no puede estar vacío" });
+  }
+  if (precio !== undefined && (typeof precio !== "number" || precio < 0)) {
+    return res.status(400).json({ mensaje: "El precio tiene que ser un número mayor o igual a 0" });
+  }
+  if (categoria !== undefined && !CATEGORIAS.includes(categoria)) {
+    return res.status(400).json({ mensaje: "Categoría inválida. Usá: " + CATEGORIAS.join(", ") });
+  }
+
+  // producto apunta al objeto dentro del array: al cambiarlo, queda guardado
+  if (nombre !== undefined) producto.nombre = nombre;
+  if (precio !== undefined) producto.precio = precio;
+  if (categoria !== undefined) producto.categoria = categoria;
+  if (descripcion !== undefined) producto.descripcion = descripcion;
+  if (imagen !== undefined) producto.imagen = imagen;
+  if (incluye !== undefined) producto.incluye = incluye;
 
   res.json(producto);
 }
 
-// ------------------------------------------------------------
-// DELETE /productos/:id  →  Eliminar uno
-// (Ficha 2: DELETE)
-// ------------------------------------------------------------
+// DELETE /productos/:id
 function eliminarProducto(req, res) {
   const id = Number(req.params.id);
-
-  // findIndex devuelve la POSICIÓN en el array (o -1 si no está)
   const posicion = productos.findIndex((p) => p.id === id);
 
   if (posicion === -1) {
     return res.status(404).json({ mensaje: "Producto no encontrado" });
   }
 
-  // splice(posicion, 1) saca 1 elemento desde esa posición.
-  // Usamos splice (y no filter) para modificar el MISMO array
-  // que exporta data/productos.js.
+  // splice modifica el MISMO array que exporta data/productos.js
   const eliminado = productos.splice(posicion, 1);
 
   res.json({ mensaje: "Producto eliminado", producto: eliminado[0] });
 }
 
-// Exportamos todas las funciones para usarlas en las rutas
 module.exports = {
   obtenerProductos,
   obtenerProductoPorId,
   agregarProducto,
   modificarProducto,
-  eliminarProducto
+  eliminarProducto,
 };
