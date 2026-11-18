@@ -1,9 +1,15 @@
+// ============================================================
 // data/productos.js  →  LOS DATOS
-// Array en memoria: si se apaga el servidor, los cambios se pierden.
-// Categorías posibles: "kit-estudio", "kit-empresarial" e "individual".
+// ------------------------------------------------------------
+// Acá viven los productos. Por ahora es un array en memoria:
+// si apagás el servidor, los cambios se pierden y vuelve a
+// arrancar con estos productos. (Más adelante esto será una
+// base de datos, pero la idea es la misma.)
+// ============================================================
 
 const productos = [
-  {"id":2,"categoria":"kit-empresarial","nombre":"Kit Empresarial","descripcion":"Conjunto de artículos de papelería ideales para oficinas.","precio":650,"imagen":"/assets/kitOficina.png"},
+  {"id":1,"categoria":"kit","nombre":"Kit Escolar","descripcion":"Kit completo de útiles escolares elaborados con materiales reciclados.","precio":450,"imagen":"/assets/kitEscolar.jpg"},
+  {"id":2,"categoria":"kit","nombre":"Kit Empresarial","descripcion":"Conjunto de artículos de papelería ideales para oficinas.","precio":650,"imagen":"/assets/kitOficina.png"},
   {"id":3,"categoria":"individual","nombre":"Cuadernos","descripcion":"Cuadernos ecológicos elaborados con papel reciclado.","precio":80,"imagen":"/assets/Cuaderno.jpg"},
   {"id":4,"categoria":"individual","nombre":"Lapiceras","descripcion":"Lapiceras fabricadas con materiales reutilizados.","precio":40,"imagen":"/assets/lapiceras.jpg"},
   {"id":5,"categoria":"individual","nombre":"Lápices","descripcion":"Lápices de madera reciclada para el uso diario.","precio":10,"imagen":"/assets/lapices.jpg"},
